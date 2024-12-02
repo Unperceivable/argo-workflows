@@ -209,9 +209,9 @@ func TestGetTaskAncestryForValidation(t *testing.T) {
 			want: []string{"task1", "task2", "task3"},
 		},
 	}
-	dctx := context.Background()
+	ctx := context.Background()
 	for _, tt := range tests {
-		res := GetTaskAncestry(dctx, tt.args.ctx, tt.args.taskName)
+		res := GetTaskAncestry(ctx, tt.args.ctx, tt.args.taskName)
 		assert.Equal(t, tt.want, res)
 	}
 }
@@ -241,7 +241,7 @@ func TestGetTaskAncestryForGlobalArtifacts(t *testing.T) {
 		},
 	}
 
-	ctx := &testContext{
+	dctx := &testContext{
 		testTasks: testTasks,
 		status: map[string]time.Time{
 			"task1": time.Now().Add(1 * time.Minute),
@@ -259,7 +259,7 @@ func TestGetTaskAncestryForGlobalArtifacts(t *testing.T) {
 		{
 			name: "one task",
 			args: args{
-				ctx:      ctx,
+				ctx:      dctx,
 				taskName: "task2",
 			},
 			want: []string{"task1"},
@@ -267,14 +267,15 @@ func TestGetTaskAncestryForGlobalArtifacts(t *testing.T) {
 		{
 			name: "multiple tasks",
 			args: args{
-				ctx:      ctx,
+				ctx:      dctx,
 				taskName: "task4",
 			},
 			want: []string{"task1", "task3", "task2"},
 		},
 	}
+	ctx := context.Background()
 	for _, tt := range tests {
-		res := GetTaskAncestry(tt.args.ctx, tt.args.taskName)
+		res := GetTaskAncestry(ctx, tt.args.ctx, tt.args.taskName)
 		assert.Equal(t, tt.want, res)
 	}
 }

@@ -487,7 +487,7 @@ type SetOperationValues struct {
 	OutputParameters map[string]string
 }
 
-func AddParamToGlobalScope(wf *wfv1.Workflow, log logging.Logger, param wfv1.Parameter) bool {
+func AddParamToGlobalScope(ctx context.Context, wf *wfv1.Workflow, log logging.Logger, param wfv1.Parameter) bool {
 	wfUpdated := false
 	if param.GlobalName == "" {
 		return wfUpdated
@@ -505,14 +505,14 @@ func AddParamToGlobalScope(wf *wfv1.Workflow, log logging.Logger, param wfv1.Par
 	}
 	paramName := fmt.Sprintf("workflow.outputs.parameters.%s", param.GlobalName)
 	if index == -1 {
-		log.Infof("setting %s: '%s'", paramName, param.Value)
+		log.Infof(ctx, "setting %s: '%s'", paramName, param.Value)
 		gParam := wfv1.Parameter{Name: param.GlobalName, Value: param.Value}
 		wf.Status.Outputs.Parameters = append(wf.Status.Outputs.Parameters, gParam)
 		wfUpdated = true
 	} else {
 		prevVal := wf.Status.Outputs.Parameters[index].Value
 		if prevVal == nil || (param.Value != nil && *prevVal != *param.Value) {
-			log.Infof("overwriting %s: '%s' -> '%s'", paramName, wf.Status.Outputs.Parameters[index].Value, param.Value)
+			log.Infof(ctx, "overwriting %s: '%s' -> '%s'", paramName, wf.Status.Outputs.Parameters[index].Value, param.Value)
 			wf.Status.Outputs.Parameters[index].Value = param.Value
 			wfUpdated = true
 		}
@@ -573,7 +573,7 @@ func updateSuspendedNode(ctx context.Context, wfIf v1alpha1.WorkflowInterface, h
 									nodeUpdated = true
 									hit = true
 									log := logging.NewSlogLogger()
-									AddParamToGlobalScope(wf, log, node.Outputs.Parameters[i])
+									AddParamToGlobalScope(ctx, wf, log, node.Outputs.Parameters[i])
 									break
 								}
 							}

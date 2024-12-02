@@ -14,8 +14,9 @@ import (
 func TestKillDaemonChildrenUnmarkPod(t *testing.T) {
 	cancel, controller := newController()
 	defer cancel()
+	ctx := context.Background()
 
-	woc := newWorkflowOperationCtx(&v1alpha1.Workflow{
+	woc := newWorkflowOperationCtx(ctx, &v1alpha1.Workflow{
 		Status: v1alpha1.WorkflowStatus{
 			Nodes: v1alpha1.Nodes{
 				"a": v1alpha1.NodeStatus{
@@ -26,7 +27,6 @@ func TestKillDaemonChildrenUnmarkPod(t *testing.T) {
 			},
 		},
 	}, controller)
-	ctx := context.Background()
 
 	assert.NotNil(t, woc.wf.Status.Nodes["a"].Daemoned)
 	// Error will be that it cannot find the pod, but we only care about the node status for this test
@@ -139,7 +139,7 @@ func TestHandleExecutionControlErrorMarksProvidedNode(t *testing.T) {
 	workflow := v1alpha1.MustUnmarshalWorkflow(workflowWithContainerSetPodInPending)
 	ctx := context.Background()
 
-	woc := newWorkflowOperationCtx(workflow, controller)
+	woc := newWorkflowOperationCtx(ctx, workflow, controller)
 
 	containerSetNodeName := "container-set-termination-demopw5vv-842041608"
 
@@ -155,9 +155,9 @@ func TestHandleExecutionControlErrorMarksChildNodes(t *testing.T) {
 	defer cancel()
 
 	workflow := v1alpha1.MustUnmarshalWorkflow(workflowWithContainerSetPodInPending)
-
-	woc := newWorkflowOperationCtx(workflow, controller)
 	ctx := context.Background()
+
+	woc := newWorkflowOperationCtx(ctx, workflow, controller)
 
 	containerSetNodeName := "container-set-termination-demopw5vv-842041608"
 	step1NodeName := "container-set-termination-demopw5vv-893664226"
