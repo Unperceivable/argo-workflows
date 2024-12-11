@@ -22,6 +22,7 @@ import (
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"github.com/argoproj/argo-workflows/v3/util"
 	"github.com/argoproj/argo-workflows/v3/util/intstr"
+	"github.com/argoproj/argo-workflows/v3/util/logging"
 	"github.com/argoproj/argo-workflows/v3/util/sorting"
 	"github.com/argoproj/argo-workflows/v3/util/template"
 	"github.com/argoproj/argo-workflows/v3/workflow/artifacts/hdfs"
@@ -140,7 +141,8 @@ func validateHooks(hooks wfv1.LifecycleHooks, hookBaseName string) error {
 // ValidateWorkflow accepts a workflow and performs validation against it.
 func ValidateWorkflow(wftmplGetter templateresolution.WorkflowTemplateNamespacedGetter, cwftmplGetter templateresolution.ClusterWorkflowTemplateGetter, wf *wfv1.Workflow, opts ValidateOpts) error {
 	ctx := newTemplateValidationCtx(wf, opts)
-	tmplCtx := templateresolution.NewContext(wftmplGetter, cwftmplGetter, wf, wf)
+	log := logging.NewSlogLogger()
+	tmplCtx := templateresolution.NewContext(wftmplGetter, cwftmplGetter, wf, wf, log)
 	var wfSpecHolder wfv1.WorkflowSpecHolder
 	var wfTmplRef *wfv1.TemplateRef
 	var err error
@@ -557,7 +559,7 @@ func (tctx *templateValidationCtx) validateTemplateHolder(tmplHolder wfv1.Templa
 			return nil, nil
 		}
 	} else if tmplName != "" {
-		_, err := tmplCtx.GetTemplateByName(tmplName)
+		_, err := tmplCtx.GetTemplateByName(ctx, tmplName)
 		if err != nil {
 			if argoerr, ok := err.(errors.ArgoError); ok && argoerr.Code() == errors.CodeNotFound {
 				return nil, errors.Errorf(errors.CodeBadRequest, "template name '%s' undefined", tmplName)
@@ -566,7 +568,7 @@ func (tctx *templateValidationCtx) validateTemplateHolder(tmplHolder wfv1.Templa
 		}
 	}
 
-	tmplCtx, resolvedTmpl, _, err := tmplCtx.ResolveTemplate(tmplHolder)
+	tmplCtx, resolvedTmpl, _, err := tmplCtx.ResolveTemplate(ctx, tmplHolder)
 	if err != nil {
 		if argoerr, ok := err.(errors.ArgoError); ok && argoerr.Code() == errors.CodeNotFound {
 			if tmplRef != nil {

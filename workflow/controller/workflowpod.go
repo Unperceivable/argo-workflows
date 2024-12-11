@@ -54,7 +54,7 @@ var (
 
 // scheduleOnDifferentHost adds affinity to prevent retry on the same host when
 // retryStrategy.affinity.nodeAntiAffinity{} is specified
-func (woc *wfOperationCtx) scheduleOnDifferentHost(node *wfv1.NodeStatus, pod *apiv1.Pod) error {
+func (woc *wfOperationCtx) scheduleOnDifferentHost(ctx context.Context, node *wfv1.NodeStatus, pod *apiv1.Pod) error {
 	if node != nil && pod != nil {
 		if retryNode := FindRetryNode(woc.wf.Status.Nodes, node.ID); retryNode != nil {
 			// recover template for the retry node
@@ -62,7 +62,7 @@ func (woc *wfOperationCtx) scheduleOnDifferentHost(node *wfv1.NodeStatus, pod *a
 			if err != nil {
 				return err
 			}
-			_, retryTmpl, _, err := tmplCtx.ResolveTemplate(retryNode)
+			_, retryTmpl, _, err := tmplCtx.ResolveTemplate(ctx, retryNode)
 			if err != nil {
 				return err
 			}
@@ -496,7 +496,7 @@ func (woc *wfOperationCtx) createWorkflowPod(ctx context.Context, nodeName strin
 		return nil, err
 	}
 
-	if err := woc.scheduleOnDifferentHost(node, pod); err != nil {
+	if err := woc.scheduleOnDifferentHost(ctx, node, pod); err != nil {
 		return nil, err
 	}
 
@@ -830,7 +830,7 @@ func (woc *wfOperationCtx) GetBoundaryTemplate(ctx context.Context, nodeName str
 		woc.log.Warnf(ctx, "couldn't retrieve node for nodeName %s, will get nil templateDeadline", nodeName)
 		return nil, err
 	}
-	boundaryTmpl, _, err := woc.GetTemplateByBoundaryID(node.BoundaryID)
+	boundaryTmpl, _, err := woc.GetTemplateByBoundaryID(ctx, node.BoundaryID)
 	if err != nil {
 		return nil, err
 	}
@@ -838,7 +838,7 @@ func (woc *wfOperationCtx) GetBoundaryTemplate(ctx context.Context, nodeName str
 }
 
 // GetTemplateByBoundaryID get a template through the node's BoundaryID.
-func (woc *wfOperationCtx) GetTemplateByBoundaryID(boundaryID string) (*wfv1.Template, bool, error) {
+func (woc *wfOperationCtx) GetTemplateByBoundaryID(ctx context.Context, boundaryID string) (*wfv1.Template, bool, error) {
 	boundaryNode, err := woc.wf.Status.Nodes.Get(boundaryID)
 	if err != nil {
 		return nil, false, err
@@ -847,7 +847,7 @@ func (woc *wfOperationCtx) GetTemplateByBoundaryID(boundaryID string) (*wfv1.Tem
 	if err != nil {
 		return nil, false, err
 	}
-	_, boundaryTmpl, templateStored, err := tmplCtx.ResolveTemplate(boundaryNode)
+	_, boundaryTmpl, templateStored, err := tmplCtx.ResolveTemplate(ctx, boundaryNode)
 	if err != nil {
 		return nil, templateStored, err
 	}

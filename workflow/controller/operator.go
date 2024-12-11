@@ -1905,7 +1905,7 @@ func (woc *wfOperationCtx) executeTemplate(ctx context.Context, nodeName string,
 		return woc.initializeNodeOrMarkError(ctx, node, nodeName, templateScope, orgTmpl, opts.boundaryID, opts.nodeFlag, ErrMaxDepthExceeded), ErrMaxDepthExceeded
 	}
 
-	newTmplCtx, resolvedTmpl, templateStored, err := tmplCtx.ResolveTemplate(orgTmpl)
+	newTmplCtx, resolvedTmpl, templateStored, err := tmplCtx.ResolveTemplate(ctx, orgTmpl)
 	if err != nil {
 		return woc.initializeNodeOrMarkError(ctx, node, nodeName, templateScope, orgTmpl, opts.boundaryID, opts.nodeFlag, err), err
 	}
@@ -2458,7 +2458,7 @@ func (woc *wfOperationCtx) GetNodeTemplate(ctx context.Context, node *wfv1.NodeS
 			woc.markNodeError(ctx, node.Name, err)
 			return nil, err
 		}
-		tmpl, err := tmplCtx.GetTemplateFromRef(node.TemplateRef)
+		tmpl, err := tmplCtx.GetTemplateFromRef(ctx, node.TemplateRef)
 		if err != nil {
 			woc.markNodeError(ctx, node.Name, err)
 			return tmpl, err
@@ -2807,7 +2807,7 @@ func (woc *wfOperationCtx) checkParallelism(ctx context.Context, tmpl *wfv1.Temp
 			return err
 		}
 
-		boundaryTemplate, templateStored, err := woc.GetTemplateByBoundaryID(boundaryID)
+		boundaryTemplate, templateStored, err := woc.GetTemplateByBoundaryID(ctx, boundaryID)
 		if err != nil {
 			return err
 		}
@@ -2839,7 +2839,7 @@ func (woc *wfOperationCtx) executeContainer(ctx context.Context, nodeName string
 
 	// Check if the output of this container is referenced elsewhere in the Workflow. If so, make sure to include it during
 	// execution.
-	includeScriptOutput, err := woc.includeScriptOutput(nodeName, opts.boundaryID)
+	includeScriptOutput, err := woc.includeScriptOutput(ctx, nodeName, opts.boundaryID)
 	if err != nil {
 		return node, err
 	}
@@ -2873,7 +2873,7 @@ func (woc *wfOperationCtx) getOutboundNodes(ctx context.Context, nodeID string) 
 		if err != nil {
 			return []string{node.ID}
 		}
-		_, parentTemplate, _, err := tmplCtx.ResolveTemplate(node)
+		_, parentTemplate, _, err := tmplCtx.ResolveTemplate(ctx, node)
 		if err != nil {
 			return []string{node.ID}
 		}
@@ -3057,7 +3057,7 @@ func (woc *wfOperationCtx) executeScript(ctx context.Context, nodeName string, t
 
 	// Check if the output of this script is referenced elsewhere in the Workflow. If so, make sure to include it during
 	// execution.
-	includeScriptOutput, err := woc.includeScriptOutput(nodeName, opts.boundaryID)
+	includeScriptOutput, err := woc.includeScriptOutput(ctx, nodeName, opts.boundaryID)
 	if err != nil {
 		return node, err
 	}
@@ -3684,7 +3684,7 @@ func (woc *wfOperationCtx) createTemplateContext(scope wfv1.ResourceScope, resou
 	} else {
 		clusterWorkflowTemplateGetter = &templateresolution.NullClusterWorkflowTemplateGetter{}
 	}
-	ctx := templateresolution.NewContext(woc.controller.wftmplInformer.Lister().WorkflowTemplates(woc.wf.Namespace), clusterWorkflowTemplateGetter, woc.execWf, woc.wf)
+	ctx := templateresolution.NewContext(woc.controller.wftmplInformer.Lister().WorkflowTemplates(woc.wf.Namespace), clusterWorkflowTemplateGetter, woc.execWf, woc.wf, woc.log)
 
 	switch scope {
 	case wfv1.ResourceScopeNamespaced:
@@ -3868,12 +3868,12 @@ func (woc *wfOperationCtx) deletePDBResource(ctx context.Context) error {
 
 // Check if the output of this node is referenced elsewhere in the Workflow. If so, make sure to include it during
 // execution.
-func (woc *wfOperationCtx) includeScriptOutput(nodeName, boundaryID string) (bool, error) {
+func (woc *wfOperationCtx) includeScriptOutput(ctx context.Context, nodeName, boundaryID string) (bool, error) {
 	if boundaryID == "" {
 		return false, nil
 	}
 
-	parentTemplate, templateStored, err := woc.GetTemplateByBoundaryID(boundaryID)
+	parentTemplate, templateStored, err := woc.GetTemplateByBoundaryID(ctx, boundaryID)
 	if err != nil {
 		return false, err
 	}

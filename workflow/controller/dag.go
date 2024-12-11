@@ -433,7 +433,7 @@ func (woc *wfOperationCtx) executeDAGTask(ctx context.Context, dagCtx *dagContex
 
 	if node != nil && node.Fulfilled() {
 		// Collect the completed task metrics
-		_, tmpl, _, tmplErr := dagCtx.tmplCtx.ResolveTemplate(task)
+		_, tmpl, _, tmplErr := dagCtx.tmplCtx.ResolveTemplate(ctx, task)
 		if tmplErr != nil {
 			woc.markNodeError(ctx, node.Name, tmplErr)
 			return
@@ -664,7 +664,7 @@ func (woc *wfOperationCtx) buildLocalScopeFromTask(ctx context.Context, dagCtx *
 					ancestorNodes = append(ancestorNodes, node)
 				}
 			}
-			_, _, templateStored, err := dagCtx.tmplCtx.ResolveTemplate(ancestorNode)
+			_, _, templateStored, err := dagCtx.tmplCtx.ResolveTemplate(ctx, ancestorNode)
 			if err != nil {
 				return nil, errors.InternalWrapError(err)
 			}

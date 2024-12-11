@@ -12,7 +12,7 @@ func (woc *wfOperationCtx) executeContainerSet(ctx context.Context, nodeName str
 	if err != nil {
 		node = woc.initializeExecutableNode(ctx, nodeName, wfv1.NodeTypePod, templateScope, tmpl, orgTmpl, opts.boundaryID, wfv1.NodePending, opts.nodeFlag)
 	}
-	includeScriptOutput, err := woc.includeScriptOutput(nodeName, opts.boundaryID)
+	includeScriptOutput, err := woc.includeScriptOutput(ctx, nodeName, opts.boundaryID)
 	if err != nil {
 		return node, err
 	}

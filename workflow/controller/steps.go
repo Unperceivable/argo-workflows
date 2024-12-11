@@ -141,7 +141,7 @@ func (woc *wfOperationCtx) executeSteps(ctx context.Context, nodeName string, tm
 				}
 				if len(childNodes) > 0 {
 					// Expanded child nodes should be created from the same template.
-					_, _, templateStored, err := stepsCtx.tmplCtx.ResolveTemplate(&childNodes[0])
+					_, _, templateStored, err := stepsCtx.tmplCtx.ResolveTemplate(ctx, &childNodes[0])
 					if err != nil {
 						return node, err
 					}
