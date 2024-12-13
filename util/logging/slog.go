@@ -131,7 +131,8 @@ func (s *slogLogger) Panicf(ctx context.Context, format string, args ...interfac
 // NewSlogLogger returns a slog based logger
 func NewSlogLogger() Logger {
 	f := make(Fields)
-	l := slog.Default()
+	l := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	// l := slog.Default()
 	s := slogLogger{
 		fields: f,
 		logger: l,
